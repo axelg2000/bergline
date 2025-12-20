@@ -19,7 +19,8 @@ Be recall-heavy: if the message even vaguely indicates where the queue is, set h
 Return STRICT JSON only (no markdown, no extra text).
 
 Rules:
-- "has_queue_location": true only if the message indicates a place/landmark/position for the queue.
+"has_queue_location": true if the message contains ANY queue-related information
+(including 'no queue')
 - "queue_location": a SHORT phrase (1–6 words) describing where the queue is.
   Examples: "kiosk", "near kiosk", "wriezener karree", "metro sign", "by the snake", "past the concrete blocks" and "no q / no queue" (means there is no queue) .
 - If no location is mentioned, set has_queue_location=false and queue_location=null.
