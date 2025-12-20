@@ -21,7 +21,7 @@ Return STRICT JSON only (no markdown, no extra text).
 Rules:
 - "has_queue_location": true only if the message indicates a place/landmark/position for the queue.
 - "queue_location": a SHORT phrase (1–6 words) describing where the queue is.
-  Examples: "kiosk", "near kiosk", "wriezener karree", "metro sign", "by the snake", "past the concrete blocks".
+  Examples: "kiosk", "near kiosk", "wriezener karree", "metro sign", "by the snake", "past the concrete blocks" and "no q / no queue" (means there is no queue) .
 - If no location is mentioned, set has_queue_location=false and queue_location=null.
 - "confidence": 0 to 1 (higher when explicit).
 
