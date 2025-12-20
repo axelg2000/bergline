@@ -59,3 +59,11 @@ def queue_latest(
     if API_KEY and x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Unauthorized")
     return get_latest_estimate(window_minutes=window)
+
+
+@app.get("/queue")
+def queue_latest_public(window: int = 30):
+    estimate = get_latest_estimate(window_minutes=window)
+    return {
+        "queue_location": estimate.get("best"),
+    }
