@@ -63,7 +63,5 @@ def queue_latest(
 
 @app.get("/queue")
 def queue_latest_public(window: int = 30):
-    estimate = get_latest_estimate(window_minutes=window)
-    return {
-        "queue_location": estimate.get("best"),
-    }
+    return get_latest_estimate(window_minutes=window)
+ 
