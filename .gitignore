@@ -1,1 +1,17 @@
 .env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+db.sqlite3
+*.session
+*.egg-info/
+dist/
+build/
+.eggs/
+*.log
+.DS_Store
+staticfiles/
+media/
+celerybeat-schedule*
+dump.rdb
