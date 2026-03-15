@@ -4,13 +4,13 @@
 
 ```
 Reddit ──┐
-Telegram ─┤──→ Scrapers ──→ RawMessage ──→ GPT-4o-mini ──→ ParsedMessage + Tags ──→ QueueSnapshot ──→ API
-Form ─────┘                                   │
-                                              extracts:
-                                              • queue_location
-                                              • queue_speed
-                                              • bouncer_name
-                                              • confidence scores
+Telegram ─┤──→ Scrapers ──→ RawMessage ──→ GPT-4o-mini ──→ ParsedMessage ──→ QueueSnapshot ──→ API
+Form ─────┘                                                      │
+                                                          flat fields:
+                                                          • queue_location
+                                                          • queue_speed
+                                                          • bouncer_name
+                                                          • confidence scores
 ```
 
 **Django apps:**

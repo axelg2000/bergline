@@ -4,14 +4,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.messages.authentication import APIKeyAuthentication
-from apps.messages.models import RawMessage, Source
+from apps.messages.models import RawMessage
 from apps.messages.serializers import MessageSubmitSerializer, RawMessageSerializer
 from apps.messages.services.ai_analysis import analyze_message
+
+
 class ParsedMessageListView(generics.ListAPIView):
     """List of parsed messages (admin use)."""
 
     serializer_class = RawMessageSerializer
-    queryset = RawMessage.objects.select_related("source", "parsed").prefetch_related("parsed__tags").order_by("-fetched_at")
+    queryset = RawMessage.objects.select_related("parsed").order_by("-fetched_at")
 
 
 class MessageSubmitView(APIView):
@@ -23,10 +25,8 @@ class MessageSubmitView(APIView):
         serializer = MessageSubmitSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        source, _ = Source.objects.get_or_create(name="form")
-
         raw_message = RawMessage.objects.create(
-            source=source,
+            source="form",
             user=request.user if hasattr(request.user, "pk") and request.user.pk else None,
             external_id=f"form_{timezone.now().timestamp()}",
             content=serializer.validated_data["content"],

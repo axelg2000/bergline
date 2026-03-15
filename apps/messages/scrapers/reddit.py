@@ -6,7 +6,7 @@ from datetime import datetime, timezone as dt_timezone
 import httpx
 from django.utils import timezone
 
-from apps.messages.models import RawMessage, Source
+from apps.messages.models import RawMessage
 from apps.messages.scrapers.constants import FETCH_WINDOW_MINUTES, REDDIT_COMMENT_LIMIT, REDDIT_POST_LIMIT, SUBREDDIT
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,6 @@ def fetch_reddit_messages() -> list[RawMessage]:
     Only processes messages from the last FETCH_WINDOW_MINUTES. Skips duplicates
     based on external_id. Returns a list of newly created RawMessage objects.
     """
-    source, _ = Source.objects.get_or_create(name="reddit")
     cutoff = timezone.now() - timezone.timedelta(minutes=FETCH_WINDOW_MINUTES)
     new_messages = []
 
@@ -46,13 +45,13 @@ def fetch_reddit_messages() -> list[RawMessage]:
             continue
 
         external_id = f"post_{post['id']}"
-        if RawMessage.objects.filter(source=source, external_id=external_id).exists():
+        if RawMessage.objects.filter(source="reddit", external_id=external_id).exists():
             continue
 
         selftext = post.get("selftext", "")
         content = f"{post['title']}\n\n{selftext}" if selftext else post["title"]
         msg = RawMessage.objects.create(
-            source=source,
+            source="reddit",
             external_id=external_id,
             content=content,
             posted_at=posted_at,
@@ -85,11 +84,11 @@ def fetch_reddit_messages() -> list[RawMessage]:
                 continue
 
             external_id = f"comment_{comment['id']}"
-            if RawMessage.objects.filter(source=source, external_id=external_id).exists():
+            if RawMessage.objects.filter(source="reddit", external_id=external_id).exists():
                 continue
 
             msg = RawMessage.objects.create(
-                source=source,
+                source="reddit",
                 external_id=external_id,
                 content=comment["body"],
                 posted_at=posted_at,

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils import timezone
 from openai import OpenAI
 
-from apps.messages.models import MessageTag, ParsedMessage, RawMessage
+from apps.messages.models import ParsedMessage, RawMessage
 from apps.queuedata.models import GuestlistSnapshot, MainQueueSnapshot
 
 logger = logging.getLogger(__name__)
@@ -35,41 +35,29 @@ Rules:
 - For "bouncer_name", extract the bouncer's name or physical description exactly as written.
   Only "Sven" and "Mischa" are real names. All other bouncers must be stored as physical descriptions
   or celebrity nicknames (e.g. "German Vin Diesel", "braids", "tunnel earring", "septum piercing").
-- Include a "confidence_score" from 0.0 to 1.0 for each tag.
-- For queue_location tags, include "queue_type" as either "main" or "guestlist".
+- Include a "confidence_score" from 0.0 to 1.0 for each field.
+- For queue_location, include "queue_type" as either "main" or "guestlist".
 
 Respond in this exact JSON format:
 {
   "is_relevant": true/false,
-  "tags": [
-    {
-      "tag_type": "queue_location",
-      "queue_type": "main" or "guestlist",
-      "extracted_value": "location_value",
-      "confidence_score": 0.0-1.0
-    },
-    {
-      "tag_type": "queue_speed",
-      "extracted_value": "fast/slow/not_moving",
-      "confidence_score": 0.0-1.0
-    },
-    {
-      "tag_type": "bouncer_name",
-      "extracted_value": "description or name",
-      "confidence_score": 0.0-1.0
-    }
-  ]
+  "queue_location": "location_value or null",
+  "queue_location_confidence": 0.0-1.0,
+  "queue_type": "main" or "guestlist",
+  "queue_speed": "fast/slow/not_moving or null",
+  "queue_speed_confidence": 0.0-1.0,
+  "bouncer_name": "description or name or null",
+  "bouncer_name_confidence": 0.0-1.0
 }
 
-Only include tags that are present in the message. The tags array can be empty if is_relevant is false."""
+Only include non-null values for fields that are present in the message."""
 
 
 def analyze_message(raw_message: RawMessage) -> ParsedMessage | None:
-    """Analyze a raw message using OpenAI and create ParsedMessage + tags.
+    """Analyze a raw message using OpenAI and create ParsedMessage + snapshots.
 
     Takes a RawMessage, sends its content to GPT-4o-mini, parses the structured
-    JSON response, and creates the corresponding ParsedMessage, MessageTag, and
-    queue snapshot records.
+    JSON response, and creates the corresponding ParsedMessage and queue snapshot records.
 
     Returns the ParsedMessage if created, or None if already parsed.
     """
@@ -98,43 +86,37 @@ def analyze_message(raw_message: RawMessage) -> ParsedMessage | None:
         raw_message=raw_message,
         is_relevant=result.get("is_relevant", False),
         ai_model=AI_MODEL,
+        queue_location=result.get("queue_location") or "",
+        queue_location_confidence=result.get("queue_location_confidence"),
+        queue_type=result.get("queue_type") or "",
+        queue_speed=result.get("queue_speed") or "",
+        queue_speed_confidence=result.get("queue_speed_confidence"),
+        bouncer_name=result.get("bouncer_name") or "",
+        bouncer_name_confidence=result.get("bouncer_name_confidence"),
     )
 
-    if not parsed.is_relevant:
-        return parsed
-
-    for tag_data in result.get("tags", []):
-        tag = MessageTag.objects.create(
-            parsed_message=parsed,
-            tag_type=tag_data["tag_type"],
-            extracted_value=tag_data["extracted_value"],
-            confidence_score=tag_data.get("confidence_score", 0.5),
-        )
-        _create_snapshot_if_needed(tag, tag_data)
+    if parsed.is_relevant and parsed.queue_location:
+        _create_snapshot_if_needed(parsed)
 
     return parsed
 
 
-def _create_snapshot_if_needed(tag: MessageTag, tag_data: dict) -> None:
-    """Create a queue snapshot if the tag is a queue_location."""
-    if tag.tag_type != "queue_location":
-        return
-
-    queue_type = tag_data.get("queue_type", "")
-    location = tag.extracted_value
+def _create_snapshot_if_needed(parsed: ParsedMessage) -> None:
+    """Create a queue snapshot if the parsed message has a queue_location."""
+    location = parsed.queue_location
     now = timezone.now()
 
-    if queue_type == "main" and location in MAIN_QUEUE_LOCATIONS:
+    if parsed.queue_type == "main" and location in MAIN_QUEUE_LOCATIONS:
         MainQueueSnapshot.objects.create(
-            message_tag=tag,
+            parsed_message=parsed,
             location=location,
-            confidence_score=tag.confidence_score,
+            confidence_score=parsed.queue_location_confidence or 0.5,
             recorded_at=now,
         )
-    elif queue_type == "guestlist" and location in GUESTLIST_LOCATIONS:
+    elif parsed.queue_type == "guestlist" and location in GUESTLIST_LOCATIONS:
         GuestlistSnapshot.objects.create(
-            message_tag=tag,
+            parsed_message=parsed,
             location=location,
-            confidence_score=tag.confidence_score,
+            confidence_score=parsed.queue_location_confidence or 0.5,
             recorded_at=now,
         )

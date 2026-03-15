@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.messages.models import MessageTag
+from apps.messages.models import ParsedMessage
 
 
 class MainQueueSnapshot(models.Model):
@@ -13,7 +13,7 @@ class MainQueueSnapshot(models.Model):
         ("wriezener_karree", "Wriezener Karree"),
         ("metro_sign", "Metro Sign"),
     ]
-    message_tag = models.ForeignKey(MessageTag, on_delete=models.CASCADE, related_name="main_queue_snapshots")
+    parsed_message = models.ForeignKey(ParsedMessage, on_delete=models.CASCADE, related_name="main_queue_snapshots")
     location = models.CharField(max_length=50, choices=LOCATIONS)
     confidence_score = models.FloatField()
     recorded_at = models.DateTimeField()
@@ -30,7 +30,7 @@ class GuestlistSnapshot(models.Model):
         ("atm", "ATM"),
         ("park", "Park"),
     ]
-    message_tag = models.ForeignKey(MessageTag, on_delete=models.CASCADE, related_name="guestlist_snapshots")
+    parsed_message = models.ForeignKey(ParsedMessage, on_delete=models.CASCADE, related_name="guestlist_snapshots")
     location = models.CharField(max_length=50, choices=LOCATIONS)
     confidence_score = models.FloatField()
     recorded_at = models.DateTimeField()

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils import timezone
 from telethon import TelegramClient
 
-from apps.messages.models import RawMessage, Source
+from apps.messages.models import RawMessage
 from apps.messages.scrapers.constants import FETCH_WINDOW_MINUTES, TELEGRAM_MESSAGE_LIMIT
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,6 @@ def fetch_telegram_messages() -> list[RawMessage]:
     """
     import asyncio
 
-    source, _ = Source.objects.get_or_create(name="telegram")
     groups = settings.TELEGRAM_GROUPS
     cutoff = datetime.now(dt_timezone.utc) - timedelta(minutes=FETCH_WINDOW_MINUTES)
 
@@ -79,7 +78,7 @@ def fetch_telegram_messages() -> list[RawMessage]:
     for group, raw_msgs in raw_by_group.items():
         for raw in raw_msgs:
             external_id = f"tg_{group}_{raw['id']}"
-            if RawMessage.objects.filter(source=source, external_id=external_id).exists():
+            if RawMessage.objects.filter(source="telegram", external_id=external_id).exists():
                 continue
 
             posted_at = timezone.make_aware(
@@ -88,7 +87,7 @@ def fetch_telegram_messages() -> list[RawMessage]:
             ) if raw["date"].tzinfo is None else raw["date"]
 
             msg = RawMessage.objects.create(
-                source=source,
+                source="telegram",
                 external_id=external_id,
                 content=raw["text"],
                 posted_at=posted_at,
