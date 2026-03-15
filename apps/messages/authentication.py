@@ -1,3 +1,5 @@
+import hmac
+
 from django.conf import settings
 from rest_framework import authentication, exceptions
 
@@ -15,6 +17,6 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         api_key = request.META.get("HTTP_X_API_KEY")
         if not api_key:
             return None
-        if api_key != settings.BERGLINE_API_KEY:
+        if not hmac.compare_digest(api_key, settings.BERGLINE_API_KEY):
             raise exceptions.AuthenticationFailed("Invalid API key.")
         return (APIKeyUser(), None)
