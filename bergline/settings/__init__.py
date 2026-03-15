@@ -1,8 +1,6 @@
 import environ
 from pathlib import Path
 
-from django.core.management.utils import get_random_secret_key
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env(
@@ -10,13 +8,7 @@ env = environ.Env(
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = env("SECRET_KEY", default="")
-if not SECRET_KEY:
-    SECRET_KEY = get_random_secret_key()
-    # Persist the generated key so it stays stable across restarts.
-    _env_path = BASE_DIR / ".env"
-    with open(_env_path, "a") as f:
-        f.write(f"\nSECRET_KEY={SECRET_KEY}\n")
+SECRET_KEY = env("SECRET_KEY")  # Required — run `python generate_secret_key.py` if missing
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
