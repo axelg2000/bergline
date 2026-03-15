@@ -7,9 +7,6 @@ from apps.messages.authentication import APIKeyAuthentication
 from apps.messages.models import RawMessage, Source
 from apps.messages.serializers import MessageSubmitSerializer, RawMessageSerializer
 from apps.messages.services.ai_analysis import analyze_message
-from apps.users.authentication import GoogleTokenAuthentication
-
-
 class ParsedMessageListView(generics.ListAPIView):
     """List of parsed messages (admin use)."""
 
@@ -18,9 +15,9 @@ class ParsedMessageListView(generics.ListAPIView):
 
 
 class MessageSubmitView(APIView):
-    """User form submission endpoint. Accepts Google Auth or API key."""
+    """User form submission endpoint."""
 
-    authentication_classes = [GoogleTokenAuthentication, APIKeyAuthentication]
+    authentication_classes = [APIKeyAuthentication]
 
     def post(self, request):
         serializer = MessageSubmitSerializer(data=request.data)

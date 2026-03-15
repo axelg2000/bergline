@@ -22,7 +22,6 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser):
-    google_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
     email = models.EmailField(unique=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
