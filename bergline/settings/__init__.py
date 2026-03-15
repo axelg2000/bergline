@@ -1,16 +1,24 @@
 import environ
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+from django.core.management.utils import get_random_secret_key
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env(
     DEBUG=(bool, False),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = env("SECRET_KEY")
+SECRET_KEY = env("SECRET_KEY", default="")
+if not SECRET_KEY:
+    SECRET_KEY = get_random_secret_key()
+    # Persist the generated key so it stays stable across restarts.
+    _env_path = BASE_DIR / ".env"
+    with open(_env_path, "a") as f:
+        f.write(f"\nSECRET_KEY={SECRET_KEY}\n")
 DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
 # --- Apps ---
 
@@ -60,12 +68,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "bergline.wsgi.application"
 
-# --- Database ---
-
-DATABASES = {
-    "default": env.db("DATABASE_URL"),
-}
-
 # --- Auth ---
 
 AUTH_USER_MODEL = "users.User"
@@ -88,6 +90,24 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# --- Logging ---
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "apps": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    },
+}
+
 # --- DRF ---
 
 REST_FRAMEWORK = {
@@ -97,9 +117,21 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "5/minute",
+        "user": "30/minute",
+    },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
 }
+
+# --- OpenAI Rate Limiting ---
+
+OPENAI_MAX_CALLS_PER_CYCLE = 10  # Max OpenAI API calls per Celery beat cycle
 
 # --- Celery ---
 
@@ -121,11 +153,6 @@ CELERY_BEAT_SCHEDULE = {
 FORCE_FETCH = env.bool("FORCE_FETCH", default=False)
 BERGLINE_API_KEY = env("BERGLINE_API_KEY")
 OPENAI_API_KEY = env("OPENAI_API_KEY")
-
-# Reddit
-REDDIT_CLIENT_ID = env("REDDIT_CLIENT_ID", default="")
-REDDIT_CLIENT_SECRET = env("REDDIT_CLIENT_SECRET", default="")
-REDDIT_USER_AGENT = env("REDDIT_USER_AGENT", default="bergline/1.0")
 
 # Telegram
 TELEGRAM_API_ID = env("TELEGRAM_API_ID", default="")
