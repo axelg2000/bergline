@@ -8,7 +8,6 @@ REST API backend that tracks the Berghain nightclub queue in real time. Collects
 - PostgreSQL
 - Celery + Celery Beat (Redis broker)
 - OpenAI GPT-4o-mini for message analysis
-- Google Auth for form submissions
 
 ## Setup
 
@@ -67,7 +66,7 @@ All endpoints require `X-API-Key` header.
 | GET | `/api/queue/guestlist/history/` | Historical guestlist data |
 | GET | `/api/schedule/now/` | Currently playing DJs per stage |
 | GET | `/api/schedule/` | Full DJ schedule |
-| POST | `/api/messages/submit/` | Submit a message (Google Auth or API key) |
+| POST | `/api/messages/submit/` | Submit a message (API key) |
 | GET | `/api/messages/` | List parsed messages (admin) |
 
 ## How It Works
