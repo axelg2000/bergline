@@ -60,8 +60,12 @@ def fetch_and_analyze_messages():
     except Exception as e:
         logger.error("Telegram scraper failed: %s", e)
 
+    max_calls = getattr(settings, "OPENAI_MAX_CALLS_PER_CYCLE", 10)
     analyzed = 0
     for msg in new_messages:
+        if analyzed >= max_calls:
+            logger.warning("OpenAI rate limit reached (%d/%d), deferring remaining.", analyzed, max_calls)
+            break
         try:
             result = analyze_message(msg)
             if result:
