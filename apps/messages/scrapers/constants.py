@@ -4,7 +4,7 @@
 FETCH_WINDOW_MINUTES = 95
 
 # Reddit
-SUBREDDIT = "Berghain_Community"
+SUBREDDIT = "Bergline"
 REDDIT_POST_LIMIT = 25
 REDDIT_COMMENT_LIMIT = 50
 
